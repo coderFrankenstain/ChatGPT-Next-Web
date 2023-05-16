@@ -119,7 +119,8 @@ export function SideBar(props: { className?: string }) {
       }`}
     >
       <div className={styles["sidebar-header"]}>
-        <div className={styles["sidebar-title"]}>XBB GPT</div>
+       
+        <div className={styles["sidebar-title"]}>XBB GPT <img src="wechat.png" width={50} height={50}></img></div>
         <div className={styles["sidebar-sub-title"]}>
           请加微信 seakingweijun 获取使用权限
         </div>

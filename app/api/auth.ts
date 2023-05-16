@@ -28,10 +28,10 @@ function parseApiKey(bearToken: string) {
 
 export function auth(req: NextRequest) {
   const authToken = req.headers.get("Authorization") ?? "";
-
+  console.log("authToken ",authToken)
   // check if it is openai api key or user token
   const { accessCode, apiKey: token } = parseApiKey(authToken);
-
+  console.log("accesscode xxxx %s",accessCode)
   const hashedCode = md5.hash(accessCode ?? "").trim();
 
   console.log("[Auth] allowed hashed codes: ", [...serverConfig.codes]);
