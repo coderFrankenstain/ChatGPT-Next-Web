@@ -67,6 +67,7 @@ export function getHeaders() {
 
 export function requestOpenaiClient(path: string) {
   const openaiUrl = useAccessStore.getState().openaiUrl;
+
   return (body: any, method = "POST") =>
     fetch(openaiUrl + path, {
       method,

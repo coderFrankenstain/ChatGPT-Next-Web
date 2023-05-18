@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { getServerSideConfig } from "../config/server";
+import { getServerSideConfig, authCodes } from "../config/server";
 import md5 from "spark-md5";
 import { ACCESS_CODE_PREFIX } from "../constant";
 
@@ -28,10 +28,11 @@ function parseApiKey(bearToken: string) {
 
 export function auth(req: NextRequest) {
   const authToken = req.headers.get("Authorization") ?? "";
-  console.log("authToken ",authToken)
+  console.log("authToken ", authToken);
   // check if it is openai api key or user token
   const { accessCode, apiKey: token } = parseApiKey(authToken);
-  console.log("accesscode xxxx %s",accessCode)
+  console.log("accesscode xxxx %s", accessCode);
+  console.log("api key ", token);
   const hashedCode = md5.hash(accessCode ?? "").trim();
 
   console.log("[Auth] allowed hashed codes: ", [...serverConfig.codes]);
@@ -40,6 +41,61 @@ export function auth(req: NextRequest) {
   console.log("[User IP] ", getIP(req));
   console.log("[Time] ", new Date().toLocaleString());
 
+  //判断授权码是否在authCodes当中。
+  if (authCodes.includes(token)) {
+    const apiKey = serverConfig.apiKey;
+    if (apiKey) {
+      console.log("[Auth] use system api key");
+      req.headers.set("Authorization", `Bearer ${apiKey}`);
+      console.log("私人授权码");
+      return {
+        error: false,
+      };
+    } else {
+      console.log("[Auth] admin did not provide an api key");
+      return {
+        error: true,
+        msg: "Empty Api Key",
+      };
+    }
+  } else {
+    if (
+      serverConfig.needCode &&
+      !serverConfig.codes.has(hashedCode) &&
+      !token
+    ) {
+      return {
+        error: true,
+        needAccessCode: true,
+        msg: "Please go settings page and fill your access code.",
+      };
+    }
+    if (!token) {
+      const apiKey = serverConfig.apiKey;
+      if (apiKey) {
+        console.log("[Auth] use system api key");
+        req.headers.set("Authorization", `Bearer ${apiKey}`);
+      } else {
+        console.log("[Auth] admin did not provide an api key");
+        return {
+          error: true,
+          msg: "Empty Api Key",
+        };
+      }
+      return {
+        error: true,
+        msg: "Not support api key ",
+      };
+    } else {
+      console.log("[Auth] use illegal key");
+      return {
+        error: true,
+        msg: "Use illegal key",
+      };
+    }
+  }
+
+  //检查在没有token的情况下，判断是否需要授权密码，如果需要判断是否有授权密码如果没有则报错
   if (serverConfig.needCode && !serverConfig.codes.has(hashedCode) && !token) {
     return {
       error: true,
